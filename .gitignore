@@ -1,0 +1,4 @@
+engine/__pycache__/
+engine/input/
+engine/signal.json
+engine/status.json
