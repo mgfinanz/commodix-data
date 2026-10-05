@@ -269,10 +269,51 @@ WEIGHTS = {"MACD": 1.0, "ADX/DMI": 1.0, "Trendflex": 1.25, "Reflex": 0.75, "Copp
            "RSI": 0.75, "Zinsen/Fed": 1.25, "Put/Call": 0.5, "Implizite Vola": 0.5,
            "Shanghai SGE": 0.75, "Gold/Silber-Ratio": 0.75}
 
-def decide(total, max_total):
+# --------------------------------------------------------------------------
+# Handelsregeln je Wert (research/optimize.py, Lernzeitraum 10/2021–03/2025, geprüft 04/2025–10/2026)
+#   mode: long | both · thr: Score-Schwelle in % · filt: Trendfilter SMA-Länge (0 = keiner)
+#   stop: nachgezogener Stop in ATR · target: Kursziel in ATR ab Einstieg (0 = keins)
+#   exit: "opp" = Ausstieg beim Gegensignal, "zero" = schon wenn der Score gegen die Position dreht
+#   trade: False = nur beobachten (keine Regel hat Trefferquote >= 50 % UND positiven Ertrag erreicht)
+# --------------------------------------------------------------------------
+LEGACY_RULE = dict(mode="both", thr=25, filt=200, stop=2.0, target=0, exit="opp", trade=True)
+COMMON_RULE = dict(mode="long", thr=45, filt=100, stop=3.0, target=1.5, exit="opp", trade=True)
+RULES = {
+    "SLV": dict(LEGACY_RULE),                       # unverändert (bereits abgestimmt)
+    "GLD": dict(COMMON_RULE), "GDX": dict(COMMON_RULE), "GDXJ": dict(COMMON_RULE),
+    "SIL": dict(COMMON_RULE), "SILJ": dict(COMMON_RULE), "CPER": dict(COMMON_RULE), "USO": dict(COMMON_RULE),
+    "MP":  dict(mode="long", thr=45, filt=200, stop=4.0, target=1.5, exit="opp", trade=True),
+    "URA": dict(mode="both", thr=35, filt=50, stop=3.0, target=1.5, exit="zero", trade=True),
+    "UNG": dict(COMMON_RULE, trade=False),
+    "NB":  dict(COMMON_RULE, trade=False),
+}
+RULE_SET = "optimized"            # "legacy" = bisherige Regeln für alle Werte (Webseite/Telegram)
+LEGACY_START = "2025-07-25"       # Webseite: Historie wie bisher ab diesem Tag (wächst täglich um eine Kerze), außer SLV
+
+
+def rule_for(ticker):
+    if RULE_SET == "legacy":
+        return dict(LEGACY_RULE)
+    return dict(RULES.get(ticker, LEGACY_RULE))
+
+
+def rule_text(r):
+    if not r.get("trade", True):
+        return "Nur beobachten – keine geprüfte Regel mit Trefferquote ≥ 50 % und positivem Ertrag"
+    parts = ["Long & Short" if r["mode"] == "both" else "nur Long", f"Schwelle ±{r['thr']:g} %",
+             f"Trendfilter SMA {r['filt']}" if r["filt"] else "ohne Trendfilter",
+             f"Stop {r['stop']:g}×ATR", f"Ziel {r['target']:g}×ATR" if r["target"] else "ohne festes Ziel",
+             "Ausstieg bei Score-Wende" if r["exit"] == "zero" else "Ausstieg beim Gegensignal"]
+    return " · ".join(parts)
+
+
+def decide(total, max_total, rule=None):
+    rule = rule or LEGACY_RULE
     pct = total / max_total * 100
-    if pct >= 25: return "KAUFEN · LONG", pct
-    if pct <= -25: return "VERKAUFEN · SHORT", pct
+    if not rule.get("trade", True):
+        return "BEOBACHTEN · KEIN HANDEL", pct
+    if pct >= rule["thr"]: return "KAUFEN · LONG", pct
+    if pct <= -rule["thr"]: return ("VERKAUFEN · SHORT" if rule["mode"] == "both" else "VERKAUFEN · FLAT"), pct
     return "NEUTRAL · FLAT", pct
 
 # --------------------------------------------------------------------------
@@ -339,6 +380,8 @@ def tech_texts(d, comp):
 
 def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
     extra = extra or {}
+    rule = rule_for(ticker)
+    THR, SM, TG = rule["thr"], rule["stop"], rule["target"]
     d = pd.DataFrame({"close": raw["close"], "high": raw["high"], "low": raw["low"]})
     c, h, l = d.close, d.high, d.low
     d["macd"], d["macd_sig"], d["macd_hist"] = macd(c)
@@ -349,6 +392,8 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
     d["coppock_m"] = coppock_monthly_equiv(c)
     d["rsi"] = rsi(c)
     d["sma50"], d["sma200"] = c.rolling(50).mean(), c.rolling(200).mean()
+    d["sma100"] = c.rolling(100).mean()
+    FILT = d[f"sma{rule['filt']}"] if rule["filt"] else None
 
     i = len(d) - 1
     tech = score_technical(d, i)
@@ -356,7 +401,7 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
     comp = {**tech, **ctxs}
     total = sum(comp[k] * WEIGHTS[k] for k in comp)
     max_total = sum(2 * WEIGHTS[k] for k in comp)
-    signal, pct = decide(total, max_total)
+    signal, pct = decide(total, max_total, rule)
     comp_txt = {**tech_texts(d, comp), **ctx_txt}
 
     r = d.iloc[i]
@@ -366,12 +411,13 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
         "last": cl, "atr14": round(a, 2),
         # Long-Seite
         "long_entry_trigger": round(float(d.high.iloc[-10:].max()) + 0.25 * a, 2),
-        "long_stop": round(cl - 2 * a, 2), "long_target": round(cl + 3 * a, 2),
+        "long_stop": round(cl - SM * a, 2), "long_target": round(cl + (TG or 3) * a, 2),
         # Short-Seite
         "short_entry_trigger": round(float(d.low.iloc[-10:].min()) - 0.25 * a, 2),
-        "short_stop": round(cl + 2 * a, 2), "short_target": round(cl - 3 * a, 2),
+        "short_stop": round(cl + SM * a, 2), "short_target": round(cl - (TG or 3) * a, 2),
         "short_exit_trigger": round(float(d.low.iloc[-10:].min()) - 0.25 * a, 2),
         "sma50": round(float(r.sma50), 2), "sma200": round(float(r.sma200), 2),
+        "filter_len": rule["filt"], "filter_sma": (round(float(FILT.iloc[-1]), 2) if FILT is not None and not np.isnan(FILT.iloc[-1]) else None),
     }
 
     # ---------------- Backtest (nur technische Komponenten – Makro historisch nicht verfügbar)
@@ -385,10 +431,10 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
         tps[j] = sum(ts[k] * tech_w[k] for k in ts) / tech_max * 100
 
     def regime_ok(j, direction, filt):
-        """Trendfilter: Long nur über SMA200, Short nur darunter (filt=True)."""
-        if not filt:
+        """Trendfilter der Regel: Long nur über SMA(filt), Short nur darunter (filt=True)."""
+        if not filt or FILT is None:
             return True
-        sm = d.sma200.iloc[j]
+        sm = FILT.iloc[j]
         if np.isnan(sm):
             return direction == 1          # ohne SMA200-Historie keine Shorts
         return d.close.iloc[j] > sm if direction == 1 else d.close.iloc[j] < sm
@@ -406,50 +452,58 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
     def run(mode, filt=False, rev=False):
         """mode: long | short | both. Einstieg zum Schluss bei Score-Schwelle,
         Ausstieg bei Gegensignal (Schluss) oder 2xATR-Trailing-Stop (Stopkurs, bei Gap Eröffnung)."""
-        allow = {1: mode in ("long", "both"), -1: mode in ("short", "both")}
+        allow = {1: mode in ("long", "both") and rule.get("trade", True),
+                 -1: (mode == "short" or (mode == "both" and rule["mode"] == "both")) and rule.get("trade", True)}
         pos, eq, bh, log, entry, ev = 0, [1.0], [1.0], [], None, []
         for j in range(start, len(d) - 1):
             tp = tps[j]
             px, nx, at = d.close.iloc[j], d.close.iloc[j + 1], d.atr.iloc[j]
-            want = 1 if (tp >= 25 or (rev and rev_up[j])) else (-1 if (tp <= -25 or (rev and rev_dn[j])) else 0)
+            want = 1 if (tp >= THR or (rev and rev_up[j])) else (-1 if (tp <= -THR or (rev and rev_dn[j])) else 0)
             stopped_dir = 0
             if pos != 0:
+                tg_hit = False
                 if pos == 1:
-                    hit = d.low.iloc[j] < entry["stop"]; fill = min(entry["stop"], opens[j])
+                    hit = d.low.iloc[j] <= entry["stop"]; fill = min(entry["stop"], opens[j])
+                    if not hit and entry["tgt"] and d.high.iloc[j] >= entry["tgt"]:
+                        tg_hit, fill = True, max(entry["tgt"], opens[j])
                 else:
-                    hit = d.high.iloc[j] > entry["stop"]; fill = max(entry["stop"], opens[j])
+                    hit = d.high.iloc[j] >= entry["stop"]; fill = max(entry["stop"], opens[j])
+                    if not hit and entry["tgt"] and d.low.iloc[j] <= entry["tgt"]:
+                        tg_hit, fill = True, min(entry["tgt"], opens[j])
                 opp = want == -pos
-                if hit or opp:
-                    xp = fill if hit else px
+                zero = rule["exit"] == "zero" and tp * pos < 0
+                if hit or tg_hit or opp or zero:
+                    xp = fill if (hit or tg_hit) else px
                     ret_t = (xp / entry["px"] - 1) * pos
                     eq[-1] *= 1 + pos * (xp - px) / px
                     log.append({"dir": "Long" if pos == 1 else "Short",
                                 "entry_date": dates[entry["i"]], "entry_px": round(float(entry["px"]), 2),
                                 "entry_score": round(float(entry["score"]), 0),
                                 "exit_date": dates[j], "exit_px": round(float(xp), 2),
-                                "reason": "ATR-Stop" if hit else "Gegensignal",
+                                "reason": "ATR-Stop" if hit else ("Kursziel" if tg_hit else ("Gegensignal" if opp else "Score-Wende")),
                                 "days": j - entry["i"], "ret_pct": round(ret_t * 100, 1)})
                     ev.append({"i": j - start, "t": "sell" if pos == 1 else "buy",
                                "k": "exit", "px": round(float(xp), 2)})
-                    stopped_dir = pos if hit else 0
+                    stopped_dir = pos if (hit or tg_hit) else 0
                     pos = 0
             if pos == 0 and want != 0 and allow[want] and want != stopped_dir and regime_ok(j, want, filt):
                 pos = want
-                entry = {"i": j, "px": px, "score": tp, "stop": px - 2 * at * pos}
+                entry = {"i": j, "px": px, "score": tp, "stop": px - SM * at * pos, "tgt": (px + TG * at * pos) if TG else 0}
                 ev.append({"i": j - start, "t": "buy" if pos == 1 else "sell",
                            "k": "entry", "px": round(float(px), 2)})
-            if pos == 1:
-                entry["stop"] = max(entry["stop"], px - 2 * at)
-            elif pos == -1:
-                entry["stop"] = min(entry["stop"], px + 2 * at)
+            if pos == 1 and entry["i"] != j:
+                entry["stop"] = max(entry["stop"], px - SM * at)
+            elif pos == -1 and entry["i"] != j:
+                entry["stop"] = min(entry["stop"], px + SM * at)
             ret = nx / px - 1
             eq.append(eq[-1] * (1 + ret * pos)); bh.append(bh[-1] * (1 + ret))
         # letzter Bar: Signal heute prüfen (Einstieg zum heutigen Schluss)
         j = len(d) - 1
-        want = 1 if (tps[j] >= 25 or (rev and rev_up[j])) else (-1 if (tps[j] <= -25 or (rev and rev_dn[j])) else 0)
+        want = 1 if (tps[j] >= THR or (rev and rev_up[j])) else (-1 if (tps[j] <= -THR or (rev and rev_dn[j])) else 0)
         if pos == 0 and want != 0 and allow[want] and regime_ok(j, want, filt):
             pos, entry = want, {"i": j, "px": d.close.iloc[j], "score": tps[j],
-                                "stop": d.close.iloc[j] - 2 * d.atr.iloc[j] * want}
+                                "stop": d.close.iloc[j] - SM * d.atr.iloc[j] * want,
+                                "tgt": (d.close.iloc[j] + TG * d.atr.iloc[j] * want) if TG else 0}
             ev.append({"i": j - start, "t": "buy" if pos == 1 else "sell", "k": "entry",
                        "px": round(float(d.close.iloc[j]), 2)})
         eq, bh = np.array(eq), np.array(bh)
@@ -469,7 +523,7 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
             "trade_log": log, "events": ev,
             "open_trade": ({"dir": "Long" if pos == 1 else "Short", "entry_date": dates[entry["i"]],
                             "entry_px": round(float(entry["px"]), 2), "stop": round(float(entry["stop"]), 2),
-                            "target": round(float(entry["px"] + 3 * d.atr.iloc[entry["i"]] * pos), 2),
+                            "target": round(float(entry["tgt"] or (entry["px"] + 3 * d.atr.iloc[entry["i"]] * pos)), 2),
                             "ret_pct": round((d.close.iloc[-1] / entry["px"] - 1) * 100 * pos, 1)}
                            if pos != 0 else None),
             "equity": [round(float(x), 4) for x in eq],
@@ -614,12 +668,21 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
         }
 
     def option_plan(mode, run_res, rev=False):
-        sig_dir = 1 if (pct >= 25 or (rev and rev_up[-1])) else (-1 if (pct <= -25 or (rev and rev_dn[-1])) else 0)
-        allowed = (sig_dir == 1 and cl > float(r.sma200)) or (sig_dir == -1 and cl < float(r.sma200) and mode == "both")
+        sig_dir = 1 if (pct >= THR or (rev and rev_up[-1])) else (-1 if (pct <= -THR or (rev and rev_dn[-1])) else 0)
+        fl = float(FILT.iloc[-1]) if FILT is not None and not np.isnan(FILT.iloc[-1]) else None
+        up_ok = fl is None or cl > fl
+        dn_ok = (FILT is None) or (fl is not None and cl < fl)
+        short_ok = mode == "both" and rule["mode"] == "both"
+        allowed = rule.get("trade", True) and ((sig_dir == 1 and up_ok) or (sig_dir == -1 and dn_ok and short_ok))
+        flt = f"SMA-{rule['filt']}-Filter" if rule["filt"] else "Filter"
         plan = {"action": "Keine neue Optionsposition", "dir": None,
-                "reason": ("Short-Signal – im Modus „Nur Long“ wird nicht short gehandelt, Position bleibt flat."
-                           if sig_dir == -1 and mode == "long" else
-                           "Signal neutral oder vom SMA-200-Filter gesperrt.")}
+                "reason": ("Nur beobachten: Für diesen Wert hat keine geprüfte Regel eine Trefferquote ≥ 50 % mit positivem Ertrag erreicht."
+                           if not rule.get("trade", True) else
+                           ("Verkaufssignal – für diesen Wert wird nur long gehandelt: bestehende Calls schließen, keine Puts."
+                            if sig_dir == -1 and rule["mode"] == "long" else
+                            ("Short-Signal – im Modus „Nur Long“ wird nicht short gehandelt, Position bleibt flat."
+                             if sig_dir == -1 and mode == "long" else
+                             f"Signal unter der Schwelle ±{THR:g} % oder vom {flt} gesperrt.")))}
         if sig_dir != 0 and allowed:
             cp = "C" if sig_dir == 1 else "P"
             if "option_chain" in MC:
@@ -689,6 +752,7 @@ def analyze(ticker, raw, opens, dates, MC, profile, extra=None):
         "asof": MC["asof"],
         "component_texts": comp_txt,
         "signal": signal, "score_pct": round(pct, 1),
+        "rule": rule, "rule_text": rule_text(rule), "rule_set": RULE_SET,
         "score_raw": round(total, 2), "score_max": round(max_total, 2),
         "components": {k: {"score": round(v, 2), "weight": WEIGHTS[k]} for k, v in comp.items()},
         "indicators": {
@@ -764,7 +828,10 @@ def run_all():
     order = ["GLD", "GDX", "GDXJ", "SIL", "SILJ", "CPER", "URA", "USO", "UNG", "MP", "NB"]
     for t in order:
         dd = json.load(open(f"data/{t}.json")); m = meta[t]
-        dates = slv_dates[-len(dd["c"]):]
+        dates = dd["t"] if "t" in dd else slv_dates[-len(dd["c"]):]
+        if RULE_SET == "legacy" and dates[0] < LEGACY_START:         # Webseite: Umfang wie bisher
+            k0 = next(i for i, x in enumerate(dates) if x >= LEGACY_START)
+            dd = {k: dd[k][k0:] for k in ("o", "h", "l", "c")}; dates = dates[k0:]
         mc = dict(macro_base(), name=m["name"], group=m["group"],
                   pc_volume_today=m["pc"][1] / m["pc"][0], pc_volume_avg=m["pc_avg"][1] / m["pc_avg"][0],
                   iv_annual=m["iv"], hv_30d_annual=m["hv"], iv_percentile_52w=m["ivp"],

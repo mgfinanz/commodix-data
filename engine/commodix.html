@@ -156,7 +156,7 @@ ul.rules{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
       <h2>Übersicht aller Werte</h2><span class="muted" style="font-size:.85rem">Modus: <b id="ovmode"></b> · Zeile antippen für Details</span>
     </div>
     <div class="tbl"><table id="ov"><thead><tr><th>Wert</th><th class="r">Kurs</th><th>Signal</th><th>Score</th><th>Filter</th><th>Order heute</th><th class="r">Rückblick</th></tr></thead><tbody></tbody></table></div>
-    <p class="muted" style="font-size:.82rem;margin:10px 0 0">Rückblick: Technik-Regeln im gewählten Modus, SLV ab Jan. 2025, übrige Werte ab Okt. 2025 (kürzere Historie). Nur SLV nutzt eine echte IBKR-Optionskette und die Sonderbausteine Shanghai-Prämie und Gold/Silber-Ratio; bei den anderen Werten ist die Option aus der ATM-IV modelliert.</p>
+    <p class="muted" style="font-size:.82rem;margin:10px 0 0">Rückblick: Technik-Regeln im gewählten Modus, SLV ab Jan. 2025, übrige Werte 5 Jahre ab Okt. 2021 (NB ab 2023), jeweils mit der eigenen Regel des Werts. Nur SLV nutzt eine echte IBKR-Optionskette und die Sonderbausteine Shanghai-Prämie und Gold/Silber-Ratio; bei den anderen Werten ist die Option aus der ATM-IV modelliert.</p>
   </div>
 </section>
 <div class="wrap" id="app">
@@ -186,6 +186,7 @@ ul.rules{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
         <div class="gauge-l"><span>−100 Verkaufen</span><span>−25</span><span>0</span><span>+25</span><span>Kaufen +100</span></div>
       </div>
       <p class="muted" id="summary" style="margin:0;max-width:62ch"></p>
+      <p id="rulebox" style="margin:0;max-width:62ch;font-size:.9rem;border-left:3px solid var(--steel,#5b7083);padding:4px 10px"></p>
     </div>
     <div class="panel">
       <div class="eyebrow" style="margin-bottom:12px">Kauf- und Verkaufspunkte (ATR-basiert)</div>
@@ -236,7 +237,7 @@ ul.rules{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
       <div class="chart" id="bt"></div>
       <div class="stats" id="btstats"></div>
       <div class="tbl" style="margin-top:12px"><table id="cmp"><thead><tr><th>Variante</th><th class="r">Ergebnis</th><th class="r">Max DD</th><th class="r">Trades</th><th class="r">Treffer</th></tr></thead><tbody></tbody></table></div>
-      <p class="muted" style="font-size:.85rem;margin:10px 0 0">IBKR-Tageskurse (SLV ab Jan. 2025, übrige Werte ab Okt. 2025), 2×ATR-Trailing-Stop, ohne Kosten. Umfelddaten (Zinsen, Optionen, Shanghai) fließen historisch nicht ein. Der SMA-200-Filter wurde an SLV nach Sichtung der Daten gewählt und ist damit im Rückblick optimiert; erst die Paper-Phase zeigt, ob er trägt. Bei den übrigen Werten greift er erst ab etwa Mai 2026, vorher sind dort nur Longs erlaubt.</p>
+      <p class="muted" style="font-size:.85rem;margin:10px 0 0">IBKR-Tageskurse (SLV ab Jan. 2025, übrige Werte 5 Jahre ab Okt. 2021, NB ab 2023), Stop, Ziel und Trendfilter laut Regel des Werts, ohne Kosten. Umfelddaten (Zinsen, Optionen, Shanghai) fließen historisch nicht ein. Der SMA-200-Filter wurde an SLV nach Sichtung der Daten gewählt. Die Regeln der übrigen Werte wurden nur auf Okt. 2021–März 2025 gesucht und auf April 2025–heute geprüft; auch das bleibt ein Rückblick – erst die Paper-Phase zeigt, ob sie tragen.</p>
     </div>
   </section>
 
@@ -268,7 +269,7 @@ ul.rules{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
       <h2>Einzelne Trades</h2><span class="muted mono" style="font-size:.85rem" id="tradesum"></span>
     </div>
     <div class="tbl"><table id="trades"><thead><tr><th>#</th><th>Richtung</th><th>Option</th><th>Einstieg</th><th class="r">Kurs</th><th>Ausstieg</th><th class="r">Kurs</th><th>Grund</th><th class="r">Kontr.</th><th class="r">Prämie</th><th class="r">Option P&amp;L</th><th class="r">% Prämie</th><th class="r">Aktie P&amp;L</th></tr></thead><tbody></tbody></table></div>
-    <p class="muted" style="font-size:.85rem;margin:10px 0 0">Option P&amp;L modelliert (siehe oben), Aktie P&amp;L = gleiches Signal mit 10.000 $ im Basiswert. Long bei Technik-Score ≥ +25 % und Schluss über SMA 200, Short bei ≤ −25 % und Schluss unter SMA 200, jeweils zum Tagesschluss. Ausstieg beim Gegensignal, am nachgezogenen 2×ATR-Stop (Füllung zum Stopkurs, bei Kurslücke zur Eröffnung) oder an der Gewinnmitnahme- bzw. Stop-Loss-Schwelle der Option. Bei diesen beiden Gründen ist der Basiswertkurs der Stand, an dem die Schwelle erreicht wurde. „% Prämie“ bezieht sich auf die erste Prämie.</p>
+    <p class="muted" style="font-size:.85rem;margin:10px 0 0">Option P&amp;L modelliert (siehe oben), Aktie P&amp;L = gleiches Signal mit 10.000 $ im Basiswert. Ein- und Ausstieg nach der Regel des Werts (unter dem Signal), jeweils zum Tagesschluss. Ausstieg beim Gegensignal bzw. bei der Score-Wende, am Kursziel, am nachgezogenen ATR-Stop (Füllung zum Stopkurs, bei Kurslücke zur Eröffnung) oder an der Gewinnmitnahme- bzw. Stop-Loss-Schwelle der Option. Bei diesen beiden Gründen ist der Basiswertkurs der Stand, an dem die Schwelle erreicht wurde. „% Prämie“ bezieht sich auf die erste Prämie.</p>
   </section>
 
   <section class="panel">
@@ -279,9 +280,9 @@ ul.rules{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
       <div class="step"><div class="eyebrow">Optional</div><h3>3 · Live</h3><p>Modus LIVE erst nach stabiler Paper-Phase. Prämienlimit je Position, nur Limit-Orders, ein Signalwechsel pro Tag. Nur gekaufte Optionen: Verlust auf die Prämie begrenzt.</p></div>
     </div>
     <ul class="rules">
-      <li><b>KAUFEN · LONG</b> ab Score ≥ +25 % (nur über SMA 200), <b>VERKAUFEN · SHORT</b> ab ≤ −25 % (nur unter SMA 200), dazwischen FLAT bzw. bestehende Position halten.</li>
+      <li><b>SLV:</b> KAUFEN · LONG ab Score ≥ +25 % (nur über SMA 200), VERKAUFEN · SHORT ab ≤ −25 % (nur unter SMA 200), dazwischen FLAT bzw. bestehende Position halten. <b>Übrige Werte:</b> eigene, auf Trefferquote ≥ 50 % geprüfte Regel je Wert (Richtung, Schwelle, Trendfilter, Stop, Ziel) – sie steht unter dem Signal. Bei „nur Long“ heißt VERKAUFEN · FLAT: Calls schließen, keine Puts. UNG und NB: nur beobachten.</li>
       <li>Gewichtung: Trendflex und Zinsen 1,25 · MACD, ADX 1,0 · Reflex, Coppock, RSI, SGE, GSR 0,75 · Put/Call, IV 0,5.</li>
-      <li>Stop 2×ATR gegen die Position, täglich nachgezogen; Ziel 3×ATR. Gegensignal schließt die Position und eröffnet die Gegenrichtung, wenn der Filter es erlaubt.</li>
+      <li>SLV: Stop 2×ATR gegen die Position, täglich nachgezogen; Ziel 3×ATR. Übrige Werte: Stop und Kursziel laut Regel (meist Stop 3×ATR, Ziel 1,5×ATR – daher viele kleine Gewinne und seltenere, größere Verluste). Gegensignal schließt die Position und eröffnet die Gegenrichtung, wenn der Filter es erlaubt.</li>
       <li>Einstieg „Score oder Umkehr“ (optional): zusätzlich, wenn der MACD seine Signallinie kreuzt und der RSI innerhalb von 3 Tagen aus der Zone unter 40 nach oben (Long) bzw. über 60 nach unten (Short) dreht. Im Rückblick ein zusätzlicher Trade – nicht belastbar.</li>
       <li>Optionen: Long = Kauf Call, Short = Kauf Put, |Δ| ≈ 0,70, nächster Monatsverfall um 100 Tage, Open Interest ≥ 1.000. Ausstieg, wenn der Basiswert den Stop berührt, das Gegensignal kommt oder die Option die Gewinnmitnahme (Standard +20 %) bzw. den Stop-Loss (Standard −40 %) auf die Prämie erreicht – was zuerst eintritt; unter 45 Tagen Restlaufzeit in neue 100-Tage-Option rollen.</li>
     </ul>
@@ -291,6 +292,9 @@ ul.rules{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:.92rem}
 </div>
 
 <script>
+function cxRule(D){return D.rule||{mode:"both",thr:25,filt:200,stop:2,target:0,exit:"opp",trade:true}}
+function cxFilt(D){const R=cxRule(D),L=D.levels;return R.filt?{n:"SMA "+R.filt,v:(L.filter_sma??L.sma200)}:{n:"ohne Trendfilter",v:null}}
+
 // ---------- Options-Rückblick mit Gewinnmitnahme / Stop-Loss (Spiegel von options_bt in slv_signal_engine.py)
 function erf_(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.5*x);
   const y=1-t*Math.exp(-x*x-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return s*y}
@@ -343,7 +347,7 @@ let D, T;
 const APP=document.getElementById("app"), APP_TPL=APP.innerHTML;
 function boot(){
 const $=id=>document.getElementById(id);
-const fmt=(v,d=2)=>v.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmt=(v,d=2)=>(v==null||!isFinite(v))?"–":v.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
 const cls=D.signal.startsWith("KAUF")?"buy":D.signal.startsWith("VERK")?"sell":"hold";
 $("asof").textContent=new Date(D.asof).toLocaleDateString("de-DE");
 $("sig").textContent=D.signal;$("pill").classList.add(cls);
@@ -352,14 +356,17 @@ const pos=(D.score_pct+100)/2;
 const g=$("gauge");[37.5,50,62.5].forEach(p=>{const t=document.createElement("div");t.className="tick";t.style.left=p+"%";g.appendChild(t)});
 const m=document.createElement("div");m.className="mark";m.style.left=pos+"%";g.appendChild(m);
 $("summary").textContent=D.summary;
+{const R=cxRule(D),B0=D.backtest;$("rulebox").innerHTML=`<b>Regel ${T}:</b> ${D.rule_text||"Score ±25 % · SMA 200 · Stop 2×ATR"}`+(R.trade?` · Rückblick ${B0.trades} Trades, Treffer ${B0.win_rate_pct==null?"–":fmt(B0.win_rate_pct,0)+" %"}, Ergebnis ${fmt(B0.strategy_return_pct,1)} %`:"")+(T==="SLV"?"":" · <span class=\"muted\">je Wert optimiert, regelbasiert, keine Anlageberatung</span>");}
 $("scoreline").textContent=`Summe ${fmt(D.score_raw)} von ±${fmt(D.score_max)} · ${fmt(D.score_pct,1)} %`;
 const L=D.levels;
 $("levels").innerHTML=[
  [D.preliminary?"Letzter Kurs":"Letzter Schluss",L.last,new Date(D.asof).toLocaleDateString("de-DE")+(D.preliminary&&D.asof_time?" "+D.asof_time+" Uhr":"")+", ATR(14) "+fmt(L.atr14)+" $ ("+fmt(D.indicators.atr_pct)+" %)",""],
- ["Short-Stop",L.short_stop,"Schluss + 2×ATR (Rückkauf)","s"],
- ["Short-Ziel",L.short_target,"Schluss − 3×ATR","g"],
- ["Short-Ausbau unter",L.short_entry_trigger,"10-Tage-Tief − ¼ ATR","s"],
- ["Long erst über",L.sma200,"SMA 200 (Richtungsfilter)","g"],
+ ...(cxRule(D).mode==="both"?[["Short-Stop",L.short_stop,`Schluss + ${fmt(cxRule(D).stop,1)}×ATR (Rückkauf)`,"s"],
+ ["Short-Ziel",L.short_target,`Schluss − ${fmt(cxRule(D).target||3,1)}×ATR`,"g"],
+ ["Short-Ausbau unter",L.short_entry_trigger,"10-Tage-Tief − ¼ ATR","s"]]:
+ [["Long-Stop",L.long_stop,`Schluss − ${fmt(cxRule(D).stop,1)}×ATR (nachgezogen)`,"s"],
+ ["Long-Ziel",L.long_target,`Schluss + ${fmt(cxRule(D).target||3,1)}×ATR`,"g"]]),
+ ["Long erst über",cxFilt(D).v,`${cxFilt(D).n} (Richtungsfilter)`,"g"],
  ["Long-Ausbruch",L.long_entry_trigger,"10-Tage-Hoch + ¼ ATR","g"]
 ].map(([a,b,c,k])=>`<div class="${k}"><span class="eyebrow">${a}</span><b>${fmt(b)}</b><small>${c}</small></div>`).join("");
 const tb=$("comp").tBodies[0];let grp="";
@@ -373,6 +380,7 @@ function chart(el,{series,zero,band,label,note,height=170}){
   const W=520,H=height,pl=38,pr=8,pt=8,pb=20;
   const all=series.flatMap(s=>s.v.filter(x=>x!=null&&!isNaN(x)));
   let lo=Math.min(...all,band?band[0]:Infinity,zero!=null?zero:Infinity),hi=Math.max(...all,band?band[1]:-Infinity,zero!=null?zero:-Infinity);
+  if(!(hi>lo)){const c=isFinite(lo)?lo:0;lo=c-1;hi=c+1}
   const pad=(hi-lo)*.06;lo-=pad;hi+=pad;
   const n=series[0].v.length,x=i=>pl+i*(W-pl-pr)/(n-1),y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
   let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}">`;
@@ -464,7 +472,7 @@ document.querySelectorAll("#cmp tr[data-k]").forEach(r=>r.classList.toggle("cur"
 const sellLong=mode==="long"&&D.signal.startsWith("VERK");
 $("sig").textContent=sellLong?"VERKAUFEN · FLAT":D.signal;
 const rl=B.reversal_last.length?B.reversal_last[B.reversal_last.length-1]:null;
-$("modenote").textContent=(mode==="long"?"Nur Long: Verkaufssignale schließen Calls, es werden keine Puts gekauft.":"Long & Short: Kaufsignal → Call, Verkaufssignal → Put (mit SMA-200-Filter).")+" "+(rev?`Score oder Umkehr: zusätzlich Einstieg, wenn der MACD seine Signallinie kreuzt und der RSI innerhalb von 3 Tagen aus <40 nach oben bzw. aus >60 nach unten dreht. Heute: ${B.reversal_today?("Umkehr "+(B.reversal_today==="UP"?"nach oben":"nach unten")):"kein Umkehrpunkt"}${rl?` · letzter: ${new Date(rl.date).toLocaleDateString("de-DE")} ${rl.dir==="UP"?"nach oben":"nach unten"}`:""}.`:"Nur Score: Einstieg ab Score ±25 %.");
+$("modenote").textContent=(mode==="long"?"Nur Long: Verkaufssignale schließen Calls, es werden keine Puts gekauft.":`Long & Short: Kaufsignal → Call, Verkaufssignal → Put (mit ${cxFilt(D).n}-Filter).`)+" "+(rev?`Score oder Umkehr: zusätzlich Einstieg, wenn der MACD seine Signallinie kreuzt und der RSI innerhalb von 3 Tagen aus <40 nach oben bzw. aus >60 nach unten dreht. Heute: ${B.reversal_today?("Umkehr "+(B.reversal_today==="UP"?"nach oben":"nach unten")):"kein Umkehrpunkt"}${rl?` · letzter: ${new Date(rl.date).toLocaleDateString("de-DE")} ${rl.dir==="UP"?"nach oben":"nach unten"}`:""}.`:`Nur Score: Einstieg ab Score ±${cxRule(D).thr} %.`);
 // Backtest
 $("bt").innerHTML="";chart($("bt"),{label:"Equity · Start = 1",note:`${M.label} · ${O.label} · Buy & Hold`,height:160,series:[{v:B.buyhold,c:"var(--muted)",dash:true,dates:false},{v:O.equity,c:"var(--line)",w:1.6},{v:M.equity,c:"var(--steel)",w:2.2,end:true}]});
 $("btstats").innerHTML=[
@@ -517,7 +525,7 @@ if(OP.dir){
   ].map(([a,b,c,k])=>`<div class="${k}"><span class="eyebrow">${a}</span><b>${fmt(b)}</b><small>${c}</small></div>`).join("");
   OP.candidates.forEach(r=>$("chain").tBodies[0].insertAdjacentHTML("beforeend",`<tr${r.strike===OP.strike?' style="font-weight:700;background:var(--steel-soft)"':""}><td class="num">${fmt(r.strike,1)} ${OP.type}</td><td class="num r">${fmt(r.bid)}</td><td class="num r">${fmt(r.ask)}</td><td class="num r">${fmt(r.mid)}</td><td class="num r">${fmt(r.iv,1)} %</td><td class="num r">${fmt(r.delta,2)}</td><td class="num r">${fmt(r.spread_pct,1)} %</td><td class="num r">${r.oi.toLocaleString("de-DE")}</td></tr>`));
 } else { $("ticket").classList.add("flat"); $("ticket").innerHTML=`<span class="eyebrow">Order für den nächsten Handelstag · Modus ${M.label}</span><div class="act">${OP.action}</div><p class="muted" style="margin:0">${OP.reason||""}</p>`;
-  $("oplv").innerHTML=[[D.preliminary?`${T} aktuell`:`${T} Schluss`,L.last,new Date(D.asof).toLocaleDateString("de-DE"),""],["Long erst über",L.sma200,"SMA 200 und Score ≥ +25 %","g"],["Long-Ausbruch",L.long_entry_trigger,"10-Tage-Hoch + ¼ ATR","g"],["Score heute",D.score_pct,"Kaufsignal ab +25 %",""]].map(([a,b,c,k])=>`<div class="${k}"><span class="eyebrow">${a}</span><b>${fmt(b)}</b><small>${c}</small></div>`).join(""); }
+  $("oplv").innerHTML=[[D.preliminary?`${T} aktuell`:`${T} Schluss`,L.last,new Date(D.asof).toLocaleDateString("de-DE"),""],["Long erst über",cxFilt(D).v,`${cxFilt(D).n} und Score ≥ +${cxRule(D).thr} %`,"g"],["Long-Ausbruch",L.long_entry_trigger,"10-Tage-Hoch + ¼ ATR","g"],["Score heute",D.score_pct,`Kaufsignal ab +${cxRule(D).thr} %`,""]].map(([a,b,c,k])=>`<div class="${k}"><span class="eyebrow">${a}</span><b>${fmt(b)}</b><small>${c}</small></div>`).join(""); }
 // Options-Backtest
 $("optchart").innerHTML="";chart($("optchart"),{label:"Kumulierter Gewinn in $",note:`Optionen${TP||SL?" mit Schwellen · ohne (dünn)":""} vs. ${T}-Aktie (gestrichelt), je 10.000 $ Exposure`,height:170,zero:0,series:[{v:OB.cum_stk,c:"var(--muted)",dash:true,dates:false},...(TP||SL?[{v:OB0.cum_opt,c:"var(--line)",w:1.4}]:[]),{v:OB.cum_opt,c:"var(--steel)",w:2.2,end:true}]});
 $("optstats").innerHTML=[
@@ -541,7 +549,7 @@ render(key());
 calcTWR();
 }
 // ---------- Übersicht & Auswahl
-const fmtG=(v,d=2)=>v.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtG=(v,d=2)=>(v==null||!isFinite(v))?"–":v.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
 function curKey(){if(window.CX_KEY)return window.CX_KEY;let m="both",e="score";try{const a=localStorage.getItem("slv-mode"),b=localStorage.getItem("slv-entry");if(a==="long"||a==="both")m=a;if(b==="score"||b==="rev")e=b}catch(x){}return m+(e==="rev"?"_c":"")}
 function renderOverview(){
   const k=curKey(), tb=document.querySelector("#ov tbody"); tb.innerHTML="";
@@ -552,14 +560,14 @@ function renderOverview(){
     const cls=A.signal.startsWith("KAUF")?"buy":A.signal.startsWith("VERK")?"sell":"hold";
     const sig=(k.startsWith("long")&&A.signal.startsWith("VERK"))?"VERKAUFEN · FLAT":A.signal;
     const w=Math.min(Math.abs(A.score_pct),100)/2, left=A.score_pct>=0?50:50-w, col=A.score_pct>0?"var(--buy)":A.score_pct<0?"var(--sell)":"var(--muted)";
-    const above=A.levels.last>A.levels.sma200;
+    const F=cxFilt(A), above=F.v==null||A.levels.last>F.v, wr=M.win_rate_pct;
     tb.insertAdjacentHTML("beforeend",`<tr data-t="${t}" tabindex="0" class="${t===T?"sel":""}"><td><b>${t}</b><div class="muted" style="font-size:.78rem">${A.name}</div></td>
       <td class="num r">${fmtG(A.levels.last)}</td>
       <td><span class="pill sm ${cls}"><i></i>${sig}</span></td>
       <td><div style="display:flex;gap:8px;align-items:center"><div class="bar" style="width:90px"><span style="left:${left}%;width:${Math.max(w,1)}%;background:${col}"></span></div><span class="num">${A.score_pct>0?"+":""}${fmtG(A.score_pct,0)} %</span></div></td>
-      <td><span class="chip ${above?"long":"short"}">${above?"über":"unter"} SMA 200</span>${A.backtest.reversal_today?` <span class="chip">Umkehr</span>`:""}</td>
+      <td><span class="chip ${above?"long":"short"}">${F.v==null?F.n:(above?"über ":"unter ")+F.n}</span>${A.backtest.reversal_today?` <span class="chip">Umkehr</span>`:""}</td>
       <td style="font-size:.86rem">${P.dir?`<b>${P.action}</b>${P.modelled?' <span class="muted">· modelliert</span>':""}`:'<span class="muted">keine neue Position</span>'}</td>
-      <td class="num r" style="color:${M.strategy_return_pct>=0?"var(--buy)":"var(--sell)"}">${M.strategy_return_pct>0?"+":""}${fmtG(M.strategy_return_pct,1)} %<div class="muted" style="font-size:.75rem">B&amp;H ${M.buyhold_return_pct>0?"+":""}${fmtG(M.buyhold_return_pct,1)} %</div></td></tr>`)});
+      <td class="num r" style="color:${M.strategy_return_pct>=0?"var(--buy)":"var(--sell)"}">${cxRule(A).trade===false?"–":(M.strategy_return_pct>0?"+":"")+fmtG(M.strategy_return_pct,1)+" %"}<div class="muted" style="font-size:.75rem">${cxRule(A).trade===false?"nur beobachten":`Treffer ${wr==null?"–":fmtG(wr,0)+" %"} · ${M.trades} Tr.`}</div><div class="muted" style="font-size:.75rem">B&amp;H ${M.buyhold_return_pct>0?"+":""}${fmtG(M.buyhold_return_pct,1)} %</div></td></tr>`)});
   tb.querySelectorAll("tr[data-t]").forEach(r=>{const go=()=>{select(r.dataset.t);document.getElementById("app").scrollIntoView({behavior:"smooth"})};r.addEventListener("click",go);r.addEventListener("keydown",e=>{if(e.key==="Enter")go()})});
 }
 function select(t){

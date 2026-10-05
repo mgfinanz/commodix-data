@@ -2,3 +2,6 @@ engine/__pycache__/
 engine/input/
 engine/signal.json
 engine/status.json
+engine/commodix-dashboard.json
+engine/commodix-data.json
+research/__pycache__/

@@ -57,14 +57,19 @@ def main(inp="input/today.json"):
         sys.exit(f"Datum {day} liegt vor dem letzten SLV-Tag {raw['last']}")
     save("slv_daily.json", raw); save("slv_open.json", opens)
 
-    # ---- übrige Werte (o/c/h/l), Länge folgt den SLV-Handelstagen
+    # ---- übrige Werte (t/o/h/l/c, mehrjährige Historie mit eigener Datumsspalte)
     for t in ORDER[1:]:
         d, b = load(f"data/{t}.json"), T["bars"][t]
-        if replace:
+        same = (d["t"][-1] == day) if "t" in d else replace
+        if same:
             d["o"][-1], d["h"][-1], d["l"][-1], d["c"][-1] = b["o"], b["h"], b["l"], b["c"]
         else:
+            if "t" in d and d["t"][-1] > day:
+                sys.exit(f"Datum {day} liegt vor dem letzten {t}-Tag {d['t'][-1]}")
             for k in "ohlc":
                 d[k].append(b[k])
+            if "t" in d:
+                d["t"].append(day)
         save(f"data/{t}.json", d)
 
     # ---- Optionen / Volatilität
@@ -111,29 +116,37 @@ def main(inp="input/today.json"):
     MC["asof"] = day
     MC["option_chain"]["dte_from_asof"] = (pd.Timestamp(MC["option_chain"]["expiry"]) - pd.Timestamp(day)).days
 
-    # ---- rechnen + bauen
-    res = E.run_all()
-    json.dump(res["SLV"], open(HERE / "signal.json", "w"), indent=1, ensure_ascii=False)
-    json.dump(res, open(HERE / "signals_all.json", "w"), ensure_ascii=False)
-    (HERE / "status.json").write_text(json.dumps({"date": day, "time": T.get("time", ""), "final": final}))
-    subprocess.run([sys.executable, "build_dashboard.py"], cwd=HERE, check=True)
-
-    # ---- Status (Zwischenstand / Schluss) in die Webseiten-Daten
-    data = load("commodix-data.json")
+    # ---- rechnen + bauen (zweimal)
+    #  1) bisherige Regeln  -> ../commodix-data.json (Webseite + Telegram, unverändert)
+    #  2) optimierte Regeln -> slv-signal.html (Claude-Dashboard) + commodix-dashboard.json
     status = {"date": day, "time": T.get("time", ""), "final": final}
-    data["status"] = status
-    for t in data["order"]:
-        data["assets"][t]["asof"] = day
-        data["assets"][t]["asof_time"] = T.get("time", "")
-        data["assets"][t]["preliminary"] = not final
-    out = HERE.parent / "commodix-data.json"
-    out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
-    (HERE / "commodix-data.json").unlink()
+    (HERE / "status.json").write_text(json.dumps(status))
+    outs = {}
+    for rs in ("legacy", "optimized"):
+        E.RULE_SET = rs
+        res = E.run_all()
+        json.dump(res, open(HERE / "signals_all.json", "w"), ensure_ascii=False)
+        subprocess.run([sys.executable, "build_dashboard.py"], cwd=HERE, check=True)
+        data = load("commodix-data.json")
+        data["status"] = status
+        for t in data["order"]:
+            data["assets"][t]["asof"] = day
+            data["assets"][t]["asof_time"] = T.get("time", "")
+            data["assets"][t]["preliminary"] = not final
+        target = HERE.parent / "commodix-data.json" if rs == "legacy" else HERE / "commodix-dashboard.json"
+        target.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+        (HERE / "commodix-data.json").unlink()
+        outs[rs] = data
+        if rs == "legacy":
+            (HERE / "slv-signal.html").unlink(missing_ok=True)          # Dashboard kommt aus Lauf 2
+    json.dump(res["SLV"], open(HERE / "signal.json", "w"), indent=1, ensure_ascii=False)
 
-    for t in data["order"]:
-        a = data["assets"][t]
-        print(f"{t:5s} {a['signal']:18s} {a['score_pct']:+6.1f}%  Kurs {a['levels']['last']:.2f}")
-    print("Status:", status, "->", out)
+    w, o = outs["legacy"], outs["optimized"]
+    print("Wert  Dashboard (optimiert)        Webseite (bisherig)")
+    for t in o["order"]:
+        a, b = o["assets"][t], w["assets"][t]
+        print(f"{t:5s} {a['signal']:24s} {a['score_pct']:+6.1f}%   {b['signal']:18s}  Kurs {a['levels']['last']:.2f}")
+    print("Status:", status, "-> Webseite: ../commodix-data.json · Dashboard: slv-signal.html")
 
 
 if __name__ == "__main__":

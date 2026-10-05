@@ -1,0 +1,416 @@
+{
+ "GLD": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 52,
+   "win": 75.0,
+   "avg": 0.51,
+   "tot": 28.7,
+   "pf": 1.64
+  },
+  "test": {
+   "n": 28,
+   "win": 75.0,
+   "avg": 0.99,
+   "tot": 30.1,
+   "pf": 2.02
+  },
+  "all": {
+   "n": 80,
+   "win": 75.0,
+   "avg": 0.68,
+   "tot": 67.4,
+   "pf": 1.79
+  },
+  "base_learn": {
+   "n": 37,
+   "win": 43.2,
+   "avg": 0.83,
+   "tot": 32.6,
+   "pf": 1.9
+  },
+  "base_test": {
+   "n": 19,
+   "win": 36.8,
+   "avg": 1.31,
+   "tot": 24.0,
+   "pf": 1.82
+  },
+  "engine_match": true
+ },
+ "GDX": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 41,
+   "win": 70.7,
+   "avg": 1.17,
+   "tot": 53.1,
+   "pf": 1.62
+  },
+  "test": {
+   "n": 23,
+   "win": 78.3,
+   "avg": 1.64,
+   "tot": 39.8,
+   "pf": 1.83
+  },
+  "all": {
+   "n": 64,
+   "win": 73.4,
+   "avg": 1.34,
+   "tot": 114.1,
+   "pf": 1.7
+  },
+  "base_learn": {
+   "n": 41,
+   "win": 39.0,
+   "avg": -0.55,
+   "tot": -25.1,
+   "pf": 0.79
+  },
+  "base_test": {
+   "n": 16,
+   "win": 37.5,
+   "avg": 1.72,
+   "tot": 24.5,
+   "pf": 1.7
+  },
+  "engine_match": true
+ },
+ "GDXJ": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 39,
+   "win": 61.5,
+   "avg": 0.3,
+   "tot": 5.1,
+   "pf": 1.11
+  },
+  "test": {
+   "n": 27,
+   "win": 74.1,
+   "avg": 1.26,
+   "tot": 32.5,
+   "pf": 1.53
+  },
+  "all": {
+   "n": 66,
+   "win": 66.7,
+   "avg": 0.7,
+   "tot": 39.3,
+   "pf": 1.27
+  },
+  "base_learn": {
+   "n": 41,
+   "win": 39.0,
+   "avg": -0.29,
+   "tot": -17.4,
+   "pf": 0.89
+  },
+  "base_test": {
+   "n": 17,
+   "win": 35.3,
+   "avg": 2.12,
+   "tot": 33.2,
+   "pf": 1.76
+  },
+  "engine_match": true
+ },
+ "SIL": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 34,
+   "win": 64.7,
+   "avg": 0.32,
+   "tot": 4.5,
+   "pf": 1.12
+  },
+  "test": {
+   "n": 25,
+   "win": 76.0,
+   "avg": 2.05,
+   "tot": 56.2,
+   "pf": 1.87
+  },
+  "all": {
+   "n": 59,
+   "win": 69.5,
+   "avg": 1.05,
+   "tot": 63.2,
+   "pf": 1.41
+  },
+  "base_learn": {
+   "n": 42,
+   "win": 31.0,
+   "avg": -0.91,
+   "tot": -36.3,
+   "pf": 0.67
+  },
+  "base_test": {
+   "n": 18,
+   "win": 33.3,
+   "avg": 1.12,
+   "tot": 12.4,
+   "pf": 1.32
+  },
+  "engine_match": true
+ },
+ "SILJ": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 32,
+   "win": 62.5,
+   "avg": 0.42,
+   "tot": 6.1,
+   "pf": 1.14
+  },
+  "test": {
+   "n": 26,
+   "win": 76.9,
+   "avg": 1.58,
+   "tot": 37.7,
+   "pf": 1.54
+  },
+  "all": {
+   "n": 58,
+   "win": 69.0,
+   "avg": 0.94,
+   "tot": 46.1,
+   "pf": 1.32
+  },
+  "base_learn": {
+   "n": 43,
+   "win": 30.2,
+   "avg": -1.11,
+   "tot": -42.5,
+   "pf": 0.64
+  },
+  "base_test": {
+   "n": 21,
+   "win": 28.6,
+   "avg": -0.83,
+   "tot": -24.5,
+   "pf": 0.82
+  },
+  "engine_match": true
+ },
+ "CPER": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 36,
+   "win": 63.9,
+   "avg": 0.23,
+   "tot": 6.4,
+   "pf": 1.15
+  },
+  "test": {
+   "n": 23,
+   "win": 69.6,
+   "avg": 0.94,
+   "tot": 21.1,
+   "pf": 1.54
+  },
+  "all": {
+   "n": 59,
+   "win": 66.1,
+   "avg": 0.51,
+   "tot": 28.9,
+   "pf": 1.32
+  },
+  "base_learn": {
+   "n": 52,
+   "win": 23.1,
+   "avg": -0.92,
+   "tot": -39.9,
+   "pf": 0.52
+  },
+  "base_test": {
+   "n": 22,
+   "win": 40.9,
+   "avg": -1.01,
+   "tot": -20.9,
+   "pf": 0.44
+  },
+  "engine_match": true
+ },
+ "URA": {
+  "rule": {
+   "mode": "both",
+   "thr": 35,
+   "filt": 50,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "zero"
+  },
+  "learn": {
+   "n": 74,
+   "win": 55.4,
+   "avg": 0.38,
+   "tot": 17.9,
+   "pf": 1.16
+  },
+  "test": {
+   "n": 42,
+   "win": 59.5,
+   "avg": 0.32,
+   "tot": 1.5,
+   "pf": 1.1
+  },
+  "all": {
+   "n": 116,
+   "win": 56.9,
+   "avg": 0.36,
+   "tot": 19.7,
+   "pf": 1.13
+  },
+  "base_learn": {
+   "n": 46,
+   "win": 37.0,
+   "avg": -1.66,
+   "tot": -56.3,
+   "pf": 0.44
+  },
+  "base_test": {
+   "n": 16,
+   "win": 43.8,
+   "avg": 0.52,
+   "tot": -1.6,
+   "pf": 1.11
+  },
+  "engine_match": true
+ },
+ "USO": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 100,
+   "stop": 3.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 37,
+   "win": 73.0,
+   "avg": 1.17,
+   "tot": 47.2,
+   "pf": 1.68
+  },
+  "test": {
+   "n": 23,
+   "win": 60.9,
+   "avg": 0.4,
+   "tot": 1.8,
+   "pf": 1.12
+  },
+  "all": {
+   "n": 60,
+   "win": 68.3,
+   "avg": 0.88,
+   "tot": 49.8,
+   "pf": 1.36
+  },
+  "base_learn": {
+   "n": 53,
+   "win": 20.8,
+   "avg": -2.12,
+   "tot": -70.6,
+   "pf": 0.42
+  },
+  "base_test": {
+   "n": 22,
+   "win": 40.9,
+   "avg": 0.77,
+   "tot": 10.6,
+   "pf": 1.34
+  },
+  "engine_match": true
+ },
+ "MP": {
+  "rule": {
+   "mode": "long",
+   "thr": 45,
+   "filt": 200,
+   "stop": 4.0,
+   "target": 1.5,
+   "exit": "opp"
+  },
+  "learn": {
+   "n": 17,
+   "win": 70.6,
+   "avg": 1.23,
+   "tot": 10.7,
+   "pf": 1.27
+  },
+  "test": {
+   "n": 19,
+   "win": 73.7,
+   "avg": 3.58,
+   "tot": 60.0,
+   "pf": 1.72
+  },
+  "all": {
+   "n": 36,
+   "win": 72.2,
+   "avg": 2.47,
+   "tot": 77.1,
+   "pf": 1.52
+  },
+  "base_learn": {
+   "n": 33,
+   "win": 42.4,
+   "avg": -0.21,
+   "tot": -19.8,
+   "pf": 0.95
+  },
+  "base_test": {
+   "n": 20,
+   "win": 35.0,
+   "avg": 2.07,
+   "tot": -4.0,
+   "pf": 1.32
+  },
+  "engine_match": true
+ }
+}

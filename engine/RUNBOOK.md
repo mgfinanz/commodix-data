@@ -44,8 +44,14 @@ Format steht im Kopf von `engine/refresh.py`. Zusätzlich:
 - `"macro"`: nur beim Tagesschluss, nur belegte Werte.
 
 ## 4. Rechnen
-`cd engine && python3 refresh.py` → schreibt `../commodix-data.json`, `slv-signal.html`, `commodix.html`.
-Ausgabe prüfen: 12 Zeilen, Kurse plausibel (Abweichung zum IBKR-Kurs < 0,5 %).
+`cd engine && python3 refresh.py` rechnet zweimal:
+- **bisherige Regeln** (`RULE_SET="legacy"`, alle Werte wie SLV: Score ±25 %, SMA 200, Stop 2×ATR, Historie ab 25.07.2025)
+  → `../commodix-data.json` = Webseite + Telegram (unverändert).
+- **optimierte Regeln je Wert** (`RULES` in `slv_signal_engine.py`, SLV unverändert, UNG/NB nur beobachten, 5 Jahre Historie)
+  → `slv-signal.html` = Claude-Dashboard (und `commodix-dashboard.json`, nicht eingecheckt).
+Ausgabe prüfen: 12 Zeilen mit beiden Spalten, Kurse plausibel (Abweichung zum IBKR-Kurs < 0,5 %).
+Die Datendateien `engine/data/<T>.json` haben ein Datumsfeld `t`; `refresh.py` ersetzt die Kerze, wenn `t[-1]` = heutiges Datum, sonst hängt es an.
+Regeln nur nach neuer Prüfung mit `research/optimize.py` ändern (Lernzeitraum bis 31.03.2025, Prüfzeitraum danach).
 
 ## 5. Veröffentlichen
 Zwischenstand: nur Schritt 3. Tagesschluss: alle Schritte.
@@ -61,7 +67,7 @@ Zwischenstand: nur Schritt 3. Tagesschluss: alle Schritte.
 Nicht ändern: WPCode-Snippets, Seiten, App-Datei auf der Webseite (die Webseite bleibt unverändert; sie bekommt nur den Tagesschluss). Nicht aufrufen: `/commodix/telegram-test`, `/commodix/telegram-post`.
 
 ## 6. Nachricht an Manuel (SendUserMessage)
-- **Tagesschluss:** Übersichtstabelle aller 12 Werte (Signal, Score, über/unter SMA 200, Umkehr, Order je Modus mit Gewinnmitnahme- und Stop-Loss-Marke),
+- **Tagesschluss:** Übersichtstabelle aller 12 Werte mit zwei Signal-Spalten „Dashboard (optimiert)“ und „Webseite/Telegram (bisherig)“ (Score, über/unter Trendfilter, Umkehr, Order je Modus mit Gewinnmitnahme- und Stop-Loss-Marke),
   Änderungen gegenüber dem Vortag („⚠ SIGNALWECHSEL“, „⚠ UMKEHRPUNKT“, „⚠ NEUER TRADE“, „⚠ STOP AUSGELÖST“, „⚠ GEWINNMITNAHME“,
   „⚠ STOP-LOSS OPTION“, „⚠ ROLLEN FÄLLIG“), drei Treiber für SLV, eine Zeile Webseite/Telegram (sync-status).
 - **Zwischenstand:** nach einem manuellen Start aus dem Dashboard immer eine Zeile („Dashboard neu berechnet HH:MM“ + Signalwechsel). Sonst nur senden, wenn sich ein Signal gegenüber dem letzten Tagesschluss geändert hat oder ein Stop vorbörslich/intraday überschritten ist
