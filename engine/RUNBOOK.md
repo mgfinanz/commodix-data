@@ -8,11 +8,13 @@ Keine Orders platzieren. Regelbasiert, keine Anlageberatung. Antworten auf Deuts
 Python-Pakete: `pip install pandas numpy --break-system-packages` falls nötig.
 
 ## 1. Modus bestimmen
-- **Tagesschluss** (`final: true`): 22:50-Lauf. Datum = heutiger US-Handelstag.
-- **Zwischenstand** (`final: false`): stündlicher Lauf während der US-Sitzung (15:30–22:00 Berlin).
-  Vorher `GET https://manuel360finanz.de/wp-json/m360/v1/commodix/summary` (WebFetch): Nur weitermachen, wenn das Feld `api` = 2 ist
-  (sonst ist auf der Webseite noch das alte Snippet aktiv → Lauf beenden, nichts pushen, kurz melden „Zwischenstand übersprungen: Snippet-Update fehlt“).
-- US-Feiertag oder Wochenende → nichts tun.
+- **Tagesschluss** (`final: true`): 22:50-Lauf. Datum = heutiger US-Handelstag. Aktualisiert Repository, Webseite (wie bisher) und Claude-Dashboard.
+- **Zwischenstand** (`final: false`): stündlicher Lauf oder manueller Start aus dem Claude-Dashboard („Jetzt neu berechnen“).
+  Aktualisiert **nur das Claude-Dashboard** – nichts committen, nichts pushen, Webseite nicht anstoßen.
+  - Läuft die US-Sitzung (Mo–Fr 15:30–22:00 Berlin): Tageskerze bis jetzt, `final:false`, `time` = jetzt.
+  - Außerhalb der Sitzung (manueller Start): letzte abgeschlossene Kerze nehmen; ist ihr Datum = `last` in `engine/slv_daily.json`,
+    ist der Stand schon aktuell → trotzdem mit `final:true` und `time` = "" rechnen und das Dashboard veröffentlichen (kein Push).
+- US-Feiertag/Wochenende ohne manuellen Start → nichts tun.
 
 ## 2. IBKR-Daten (Interactive_Brokers_IBKR, per ToolSearch laden)
 Werte und contract_ids: SLV 39039301 · GLD 51529211 · GDX 229726316 · GDXJ 229726197 · SIL 211651690 · SILJ 680887855 ·
@@ -46,6 +48,7 @@ Format steht im Kopf von `engine/refresh.py`. Zusätzlich:
 Ausgabe prüfen: 12 Zeilen, Kurse plausibel (Abweichung zum IBKR-Kurs < 0,5 %).
 
 ## 5. Veröffentlichen
+Zwischenstand: nur Schritt 3. Tagesschluss: alle Schritte.
 1. `git add -A`, Commit „CommodiX {Zwischenstand HH:MM | Tagesschluss} {Datum}“, `git push origin main`
    (vorher `git fetch origin main` und ggf. rebase).
 2. WebFetch `https://manuel360finanz.de/wp-json/m360/v1/commodix/sync-tick?d={JJJJ-MM-TT-HHMM}` → Feld `status`.
@@ -55,11 +58,11 @@ Ausgabe prüfen: 12 Zeilen, Kurse plausibel (Abweichung zum IBKR-Kurs < 0,5 %).
 4. Nur wenn GitHub-Push unmöglich ist und es der Tagesschluss ist: Rückfall über Claude in Chrome wie früher
    (wp-admin/media-new.php, Datei-Input, POST /wp-json/m360/v1/commodix mit `{data}` und X-WP-Nonce, genau einmal).
 
-Nicht ändern: WPCode-Snippets, Seiten, App-Datei auf der Webseite. Nicht aufrufen: `/commodix/telegram-test`, `/commodix/telegram-post`.
+Nicht ändern: WPCode-Snippets, Seiten, App-Datei auf der Webseite (die Webseite bleibt unverändert; sie bekommt nur den Tagesschluss). Nicht aufrufen: `/commodix/telegram-test`, `/commodix/telegram-post`.
 
 ## 6. Nachricht an Manuel (SendUserMessage)
 - **Tagesschluss:** Übersichtstabelle aller 12 Werte (Signal, Score, über/unter SMA 200, Umkehr, Order je Modus mit Gewinnmitnahme- und Stop-Loss-Marke),
   Änderungen gegenüber dem Vortag („⚠ SIGNALWECHSEL“, „⚠ UMKEHRPUNKT“, „⚠ NEUER TRADE“, „⚠ STOP AUSGELÖST“, „⚠ GEWINNMITNAHME“,
   „⚠ STOP-LOSS OPTION“, „⚠ ROLLEN FÄLLIG“), drei Treiber für SLV, eine Zeile Webseite/Telegram (sync-status).
-- **Zwischenstand:** nur senden, wenn sich ein Signal gegenüber dem letzten Tagesschluss geändert hat oder ein Stop vorbörslich/intraday überschritten ist
+- **Zwischenstand:** nach einem manuellen Start aus dem Dashboard immer eine Zeile („Dashboard neu berechnet HH:MM“ + Signalwechsel). Sonst nur senden, wenn sich ein Signal gegenüber dem letzten Tagesschluss geändert hat oder ein Stop vorbörslich/intraday überschritten ist
   (eine kurze Zeile je Wert, Kennzeichnung „vorläufig“). Sonst keine Nachricht.

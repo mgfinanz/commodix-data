@@ -602,7 +602,54 @@ function cxLive(){
   cxStamp("geprüft "+new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}));
   setInterval(()=>{if(document.hidden)return; cxLoad().then(j=>{const ch=cxApply(j);cxStamp((ch?"Neue Daten · ":"")+"geprüft "+new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}))}).catch(()=>{})},5*60*1000);
 }
-if(ALL&&ALL.assets){cxInit()}else{
+// ---------- Neuberechnung aus dem Claude-Dashboard (startet die Cloud-Aufgabe über den Konnektor „Claude Code Remote“)
+const CX_TRIG="trig_012jNj5nM58ckMw4hLcRBiud", CX_SRV="Claude Code Remote";
+const hm=ms=>new Date(ms).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+async function cxArtifactRefresh(){
+  if(!window.claude||!window.claude.use)return;
+  let mcp=null; try{mcp=await window.claude.use("mcp")}catch(e){}
+  if(!mcp)return;
+  const b=document.getElementById("cx-refresh"); b.hidden=false; b.textContent="↻ Jetzt neu berechnen";
+  b.title="Holt aktuelle Kurse aus IBKR, rechnet alle 12 Werte neu und veröffentlicht das Dashboard (dauert etwa 5–10 Minuten).";
+  let fired=0; try{fired=+localStorage.getItem("cx-fired")||0}catch(e){}
+  const lock=()=>Date.now()-fired<10*60*1000;
+  if(lock()){b.disabled=true; cxStamp("Neuberechnung gestartet "+hm(fired)+" – läuft");}
+  const why=e=>({server_not_connected:"Konnektor „"+CX_SRV+"“ fehlt – in claude.ai unter Einstellungen → Konnektoren hinzufügen.",
+    needs_reauth:"„"+CX_SRV+"“ neu verbinden (Einstellungen → Konnektoren).",
+    not_in_manifest:"Zugriff für diese Seite nicht erlaubt – über das Menü der Seite unter Berechtigungen freigeben.",
+    blocked_by_policy:"Durch eine Richtlinie deiner Organisation blockiert.",
+    approval_required:"Benötigt eine Freigabe, die hier nicht möglich ist.",
+    selection_required:"Bitte zuerst auswählen, welcher Konnektor genutzt werden soll.",
+    server_unavailable:"Dienst gerade nicht erreichbar – gleich noch einmal versuchen.",
+    tool_error:"Start abgelehnt: "+(e&&e.message||"")}[e&&e.code]||("Start fehlgeschlagen ("+(e&&e.code||"Fehler")+")"));
+  b.addEventListener("click",async()=>{
+    if(lock())return; b.disabled=true; b.textContent="↻ Starte …";
+    try{
+      await mcp.callTool(CX_SRV,"fire_trigger",{trigger_id:CX_TRIG,text:"Manuell aus dem CommodiX-Dashboard ausgelöst."},{cache:false});
+      fired=Date.now(); try{localStorage.setItem("cx-fired",String(fired))}catch(e){}
+      cxStamp("Neuberechnung gestartet "+hm(fired)+" – dauert etwa 5–10 Minuten, danach Seite neu laden.");
+      watch();
+    }catch(e){ cxStamp(why(e)); b.disabled=false; }
+    b.textContent="↻ Jetzt neu berechnen";
+  });
+  let un=null;
+  function watch(){
+    if(un)return;
+    un=mcp.watchTool(CX_SRV,"list_triggers",{recurring:true,limit:50},ev=>{
+      if(ev.type!=="data")return;
+      const p=ev.result.payload||{}, t=(p.data||[]).find(x=>x.id===CX_TRIG), lr=t&&t.last_run;
+      if(!lr||!fired)return;
+      const at=Date.parse(lr.fired_at||0), done=Date.parse(lr.finished_at||0);
+      if(at>=fired-120000&&done){
+        const ok=/SUCCEEDED/.test(lr.status||"");
+        cxStamp(ok?"Neuberechnung fertig "+hm(done)+" – Seite neu laden, um sie zu sehen.":"Neuberechnung beendet ("+(lr.status||"").replace(/^ROUTINE_RUN_STATUS_/,"").toLowerCase()+") – Details in der Aufgabe.");
+        if(ok){b.disabled=false; fired=0; try{localStorage.removeItem("cx-fired")}catch(e){} un&&un(); un=null;}
+      }
+    },{refetchInterval:60000});
+  }
+  if(lock())watch();
+}
+if(ALL&&ALL.assets){cxInit();cxArtifactRefresh()}else{
   cxLoad().then(j=>{ALL=j;cxInit();cxLive()})
    .catch(e=>{document.getElementById("app").innerHTML='<div class="panel" style="margin:24px 0"><h2>Signale gerade nicht verfügbar</h2><p class="muted">Die Daten konnten nicht geladen werden ('+e.message+'). Bitte später erneut versuchen.</p></div>'});
 }
