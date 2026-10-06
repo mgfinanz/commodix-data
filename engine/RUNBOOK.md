@@ -55,11 +55,14 @@ Regeln nur nach neuer Prüfung mit `research/optimize.py` ändern (Lernzeitraum 
 
 ## 5. Veröffentlichen
 Zwischenstand: nur Schritt 3. Tagesschluss: alle Schritte.
-1. `git add -A`, Commit „CommodiX {Zwischenstand HH:MM | Tagesschluss} {Datum}“, `git push origin main`
-   (vorher `git fetch origin main` und ggf. rebase).
+1. `git add -A`, Commit „CommodiX Tagesschluss {Datum}“, `git fetch origin main`, `git rebase origin/main`, `git push origin HEAD:main`.
+   **Pflichtprüfung:** `git ls-remote origin refs/heads/main` muss den eigenen Commit-Hash zeigen. Sonst Fehlertext notieren,
+   1 Minute warten, Push genau einmal wiederholen. Schritt 3 (Dashboard) erst NACH Push und sync-tick ausführen –
+   ein veröffentlichtes Dashboard ersetzt nicht den Push (am 05.10. wurde nur das Dashboard aktualisiert, die Webseite blieb stehen).
 2. WebFetch `https://manuel360finanz.de/wp-json/m360/v1/commodix/sync-tick?d={JJJJ-MM-TT-HHMM}` → Feld `status`.
    Erwartet „übernommen …“. Bei „aktuell (…)“ oder „Datei bei GitHub nicht erreichbar“ 3 Minuten warten, genau einmal wiederholen.
-   Telegram meldet die Webseite selbst – nur beim Tagesschluss und nur bei Signalwechseln.
+   Telegram meldet die Webseite selbst – nur beim Tagesschluss und nur bei neuen KAUF-/VERKAUF-Signalen
+   (Antwort „Telegram: keine neuen Signale“ ist dann korrekt). Den `status`-Text wörtlich in die Nachricht an Manuel übernehmen.
 3. Claude-Dashboard (Artifact https://claude.ai/artifact/4TwQBp6UJjFrVB2PhZ4zdY): Artifact `read`, dann mit `url` und `file_path` = `engine/slv-signal.html` veröffentlichen.
 4. Nur wenn GitHub-Push unmöglich ist und es der Tagesschluss ist: Rückfall über Claude in Chrome wie früher
    (wp-admin/media-new.php, Datei-Input, POST /wp-json/m360/v1/commodix mit `{data}` und X-WP-Nonce, genau einmal).
@@ -67,7 +70,8 @@ Zwischenstand: nur Schritt 3. Tagesschluss: alle Schritte.
 Nicht ändern: WPCode-Snippets, Seiten, App-Datei auf der Webseite (die Webseite bleibt unverändert; sie bekommt nur den Tagesschluss). Nicht aufrufen: `/commodix/telegram-test`, `/commodix/telegram-post`.
 
 ## 6. Nachricht an Manuel (SendUserMessage)
-- **Tagesschluss:** Übersichtstabelle aller 12 Werte mit zwei Signal-Spalten „Dashboard (optimiert)“ und „Webseite/Telegram (bisherig)“ (Score, über/unter Trendfilter, Umkehr, Order je Modus mit Gewinnmitnahme- und Stop-Loss-Marke),
+- **Tagesschluss:** Erste Zeile immer: „GitHub: Push ok (Hash) / FEHLER …“ und „Webseite: {sync-status wörtlich}“.
+  Scheitert Push oder sync-tick endgültig: Nachricht mit „⚠ CommodiX Tagesschluss nicht auf der Webseite“ beginnen. Danach Übersichtstabelle aller 12 Werte mit zwei Signal-Spalten „Dashboard (optimiert)“ und „Webseite/Telegram (bisherig)“ (Score, über/unter Trendfilter, Umkehr, Order je Modus mit Gewinnmitnahme- und Stop-Loss-Marke),
   Änderungen gegenüber dem Vortag („⚠ SIGNALWECHSEL“, „⚠ UMKEHRPUNKT“, „⚠ NEUER TRADE“, „⚠ STOP AUSGELÖST“, „⚠ GEWINNMITNAHME“,
   „⚠ STOP-LOSS OPTION“, „⚠ ROLLEN FÄLLIG“), drei Treiber für SLV, eine Zeile Webseite/Telegram (sync-status).
 - **Zwischenstand:** nach einem manuellen Start aus dem Dashboard immer eine Zeile („Dashboard neu berechnet HH:MM“ + Signalwechsel). Sonst nur senden, wenn sich ein Signal gegenüber dem letzten Tagesschluss geändert hat oder ein Stop vorbörslich/intraday überschritten ist
